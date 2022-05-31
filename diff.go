@@ -62,6 +62,8 @@ func diffRaw(src, dst string) error {
 		if err := diffDir(src, dst); err != nil {
 			return fmt.Errorf("failed to diff dir src [%s] dst [%s]: %w", src, dst, err)
 		}
+
+		return nil
 	}
 
 	// Both is file
@@ -69,6 +71,8 @@ func diffRaw(src, dst string) error {
 		if err := diffFile(src, dst); err != nil {
 			return fmt.Errorf("failed to diff file src [%s] dst [%s]: %w", src, dst, err)
 		}
+
+		return nil
 	}
 
 	colorWarning.Printf("src [%s] dst [%s] is not same type file or same type dir\n", src, dst)
