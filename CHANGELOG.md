@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.0.4 (2022-05-31)
+
+### Added
+
+- feat: more consistent when traverse src dir entries (2022-05-31)
+
+### Others
+
+- chore(changelog): generate v0.0.3 (2022-05-31)
+
 ## v0.0.3 (2022-05-31)
 
 ### Fixed
