@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.0.5 (2022-05-31)
+
+### Others
+
+- build: run go mod tidy (2022-05-31)
+
+- chore(changelog): generate v0.0.3 (2022-05-31)
+
 ## v0.0.4 (2022-05-31)
 
 ### Added
