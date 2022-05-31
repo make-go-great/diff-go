@@ -17,7 +17,10 @@ const (
 	homeSymbol = '~'
 )
 
-var colorWarning = color.New(color.FgYellow)
+var (
+	colorInfo    = color.New(color.FgBlue)
+	colorWarning = color.New(color.FgYellow)
+)
 
 // Diff src with dst (src and dst can have home symbol)
 func Diff(src, dst string) error {
@@ -92,31 +95,21 @@ func diffDir(src, dst string) error {
 	}
 
 	// Convert arr to map
-	mSrcEntries := make(map[string]fs.DirEntry)
-	for _, entry := range srcDirEntries {
-		mSrcEntries[entry.Name()] = entry
-	}
-
 	mDstEntries := make(map[string]fs.DirEntry)
 	for _, entry := range dstDirEntries {
 		mDstEntries[entry.Name()] = entry
 	}
 
 	// Find entry exist in both src and dst
-	mBothExistEntries := make(map[string]fs.DirEntry)
-	for name, entry := range mSrcEntries {
-		if _, ok := mDstEntries[name]; ok {
-			mBothExistEntries[name] = entry
+	for _, entry := range srcDirEntries {
+		if _, ok := mDstEntries[entry.Name()]; ok {
+			joinedSrc := filepath.Join(src, entry.Name())
+			joinedDst := filepath.Join(dst, entry.Name())
+			if err := diffRaw(joinedSrc, joinedDst); err != nil {
+				return fmt.Errorf("failed to diff raw src [%s] dst [%s]: %w", src, dst, err)
+			}
 		} else {
-			colorWarning.Printf("src [%s] not exist in dst\n", filepath.Join(src, name))
-		}
-	}
-
-	for entry := range mBothExistEntries {
-		joinedSrc := filepath.Join(src, entry)
-		joinedDst := filepath.Join(dst, entry)
-		if err := diffRaw(joinedSrc, joinedDst); err != nil {
-			return fmt.Errorf("failed to diff raw src [%s] dst [%s]: %w", src, dst, err)
+			colorWarning.Printf("src [%s] not exist in dst\n", filepath.Join(src, entry.Name()))
 		}
 	}
 
@@ -124,9 +117,11 @@ func diffDir(src, dst string) error {
 }
 
 func diffFile(src, dst string) error {
+	colorInfo.Printf("Diff file src [%s] dst [%s]\n", src, dst)
 	if err := diff.Text(src, dst, nil, nil, os.Stdout, write.TerminalColor()); err != nil {
 		return fmt.Errorf("failed to diff text src [%s] dst [%s]: %w", src, dst, err)
 	}
+	fmt.Println()
 
 	return nil
 }
