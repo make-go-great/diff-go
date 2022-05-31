@@ -3,6 +3,7 @@ package diff
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -18,19 +19,24 @@ const (
 
 var colorWarning = color.New(color.FgYellow)
 
-// Diff src with dst
+// Diff src with dst (src and dst can have home symbol)
 func Diff(src, dst string) error {
 	// Trim home symbol first to make sure no ~ in path
 	src, err := trimHomeSymbol(src)
 	if err != nil {
-		return fmt.Errorf("failed to trim ~ for src [%s]", src)
+		return fmt.Errorf("failed to trim home symbol src [%s]", src)
 	}
 
 	dst, err = trimHomeSymbol(dst)
 	if err != nil {
-		return fmt.Errorf("failed to trim ~ for dst [%s]", dst)
+		return fmt.Errorf("failed to trim home symbol dst [%s]", dst)
 	}
 
+	return diffRaw(src, dst)
+}
+
+// Diff src with dst
+func diffRaw(src, dst string) error {
 	srcFileInfo, err := os.Stat(src)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -41,17 +47,17 @@ func Diff(src, dst string) error {
 		return fmt.Errorf("failed to stat src [%s]: %w", src, err)
 	}
 
-	dstFileInfo, err := os.Stat(src)
+	dstFileInfo, err := os.Stat(dst)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			colorWarning.Printf("dst [%s] not exist\n", src)
+			colorWarning.Printf("dst [%s] not exist\n", dst)
 			return nil
 		}
 
 		return fmt.Errorf("failed to stat dst [%s]: %w", dst, err)
 	}
 
-	// Both is directory
+	// Both is dir
 	if srcFileInfo.IsDir() && dstFileInfo.IsDir() {
 		if err := diffDir(src, dst); err != nil {
 			return fmt.Errorf("failed to diff dir src [%s] dst [%s]: %w", src, dst, err)
@@ -65,11 +71,12 @@ func Diff(src, dst string) error {
 		}
 	}
 
-	colorWarning.Printf("src %s dst %s is not same type file or same type directory\n", src, dst)
+	colorWarning.Printf("src [%s] dst [%s] is not same type file or same type dir\n", src, dst)
 	return nil
 }
 
 func diffDir(src, dst string) error {
+	// Read dir into arr
 	srcDirEntries, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("failed to read dir [%s]: %w", src, err)
@@ -80,29 +87,32 @@ func diffDir(src, dst string) error {
 		return fmt.Errorf("failed to read dir [%s]: %w", dst, err)
 	}
 
-	mSrcEntries := make(map[string]struct{})
+	// Convert arr to map
+	mSrcEntries := make(map[string]fs.DirEntry)
 	for _, entry := range srcDirEntries {
-		mSrcEntries[filepath.Join(src, entry.Name())] = struct{}{}
+		mSrcEntries[entry.Name()] = entry
 	}
 
-	mDstEntries := make(map[string]struct{})
+	mDstEntries := make(map[string]fs.DirEntry)
 	for _, entry := range dstDirEntries {
-		mDstEntries[filepath.Join(dst, entry.Name())] = struct{}{}
+		mDstEntries[entry.Name()] = entry
 	}
 
-	mBothExistEntries := make(map[string]struct{})
-
-	for entry := range mSrcEntries {
-		if _, ok := mDstEntries[entry]; ok {
-			mBothExistEntries[entry] = struct{}{}
+	// Find entry exist in both src and dst
+	mBothExistEntries := make(map[string]fs.DirEntry)
+	for name, entry := range mSrcEntries {
+		if _, ok := mDstEntries[name]; ok {
+			mBothExistEntries[name] = entry
 		} else {
-			colorWarning.Printf("src [%s] not exist in dst\n", entry)
+			colorWarning.Printf("src [%s] not exist in dst\n", filepath.Join(src, name))
 		}
 	}
 
 	for entry := range mBothExistEntries {
-		if err := Diff(entry, entry); err != nil {
-			return fmt.Errorf("failed to diff src [%s] dst [%s]: %w", src, dst, err)
+		joinedSrc := filepath.Join(src, entry)
+		joinedDst := filepath.Join(dst, entry)
+		if err := diffRaw(joinedSrc, joinedDst); err != nil {
+			return fmt.Errorf("failed to diff raw src [%s] dst [%s]: %w", src, dst, err)
 		}
 	}
 
@@ -111,7 +121,7 @@ func diffDir(src, dst string) error {
 
 func diffFile(src, dst string) error {
 	if err := diff.Text(src, dst, nil, nil, os.Stdout, write.TerminalColor()); err != nil {
-		return fmt.Errorf("failed to diff text src %s dst %s:%w", src, dst, err)
+		return fmt.Errorf("failed to diff text src [%s] dst [%s]: %w", src, dst, err)
 	}
 
 	return nil
