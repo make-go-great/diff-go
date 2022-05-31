@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.0.2 (2022-05-31)
+
+### Fixed
+
+- fix: correctly diff dir (2022-05-31)
+
+### Others
+
+- chore(changelog): generate v0.0.1 (2022-05-31)
+
 ## v0.0.1 (2022-05-31)
 
 ### Added
