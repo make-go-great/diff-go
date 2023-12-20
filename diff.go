@@ -28,12 +28,12 @@ func Diff(src, dst string) error {
 	// Trim home symbol first to make sure no ~ in path
 	src, err := trimHomeSymbol(src)
 	if err != nil {
-		return fmt.Errorf("failed to trim home symbol src [%s]", src)
+		return fmt.Errorf("failed to trim home symbol src [%s]: %w", src, err)
 	}
 
 	dst, err = trimHomeSymbol(dst)
 	if err != nil {
-		return fmt.Errorf("failed to trim home symbol dst [%s]", dst)
+		return fmt.Errorf("failed to trim home symbol dst [%s]: %w", dst, err)
 	}
 
 	return diffRaw(src, dst)
@@ -48,7 +48,7 @@ func diffRaw(src, dst string) error {
 			return nil
 		}
 
-		return fmt.Errorf("failed to stat src [%s]: %w", src, err)
+		return fmt.Errorf("os: failed to stat src [%s]: %w", src, err)
 	}
 
 	dstFileInfo, err := os.Stat(dst)
@@ -58,7 +58,7 @@ func diffRaw(src, dst string) error {
 			return nil
 		}
 
-		return fmt.Errorf("failed to stat dst [%s]: %w", dst, err)
+		return fmt.Errorf("os: failed to stat dst [%s]: %w", dst, err)
 	}
 
 	// Both is dir
@@ -87,12 +87,12 @@ func diffDir(src, dst string) error {
 	// Read dir into arr
 	srcDirEntries, err := os.ReadDir(src)
 	if err != nil {
-		return fmt.Errorf("failed to read dir [%s]: %w", src, err)
+		return fmt.Errorf("os: failed to read dir [%s]: %w", src, err)
 	}
 
 	dstDirEntries, err := os.ReadDir(dst)
 	if err != nil {
-		return fmt.Errorf("failed to read dir [%s]: %w", dst, err)
+		return fmt.Errorf("os: failed to read dir [%s]: %w", dst, err)
 	}
 
 	// Convert arr to map
@@ -135,7 +135,7 @@ func diffFile(src, dst string) error {
 
 	colorInfo.Printf("Diff file src [%s] dst [%s]\n", src, dst)
 	if err := diff.Text(src, dst, srcBytes, dstBytes, os.Stdout, write.TerminalColor()); err != nil {
-		return fmt.Errorf("failed to diff text src [%s] dst [%s]: %w", src, dst, err)
+		return fmt.Errorf("diff: failed to text src [%s] dst [%s]: %w", src, dst, err)
 	}
 	fmt.Println()
 
@@ -152,7 +152,7 @@ func trimHomeSymbol(path string) (string, error) {
 
 	currentUser, err := user.Current()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("user: failed to current: %w", err)
 	}
 
 	newPath := filepath.Join(currentUser.HomeDir, path[1:])
