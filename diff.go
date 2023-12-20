@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -117,8 +118,23 @@ func diffDir(src, dst string) error {
 }
 
 func diffFile(src, dst string) error {
+	srcBytes, err := os.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("os: failed to read file src [%s]: %w", src, err)
+	}
+
+	dstBytes, err := os.ReadFile(dst)
+	if err != nil {
+		return fmt.Errorf("os: failed to read file dst [%s]: %w", dst, err)
+	}
+
+	// Ignore diff if src, dst is the same
+	if bytes.Equal(srcBytes, dstBytes) {
+		return nil
+	}
+
 	colorInfo.Printf("Diff file src [%s] dst [%s]\n", src, dst)
-	if err := diff.Text(src, dst, nil, nil, os.Stdout, write.TerminalColor()); err != nil {
+	if err := diff.Text(src, dst, srcBytes, dstBytes, os.Stdout, write.TerminalColor()); err != nil {
 		return fmt.Errorf("failed to diff text src [%s] dst [%s]: %w", src, dst, err)
 	}
 	fmt.Println()
