@@ -44,7 +44,7 @@ func diffRaw(src, dst string) error {
 	srcFileInfo, err := os.Stat(src)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			colorWarning.Printf("src [%s] not exist\n", src)
+			_, _ = colorWarning.Printf("src [%s] not exist\n", src)
 			return nil
 		}
 
@@ -54,7 +54,7 @@ func diffRaw(src, dst string) error {
 	dstFileInfo, err := os.Stat(dst)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			colorWarning.Printf("dst [%s] not exist\n", dst)
+			_, _ = colorWarning.Printf("dst [%s] not exist\n", dst)
 			return nil
 		}
 
@@ -79,7 +79,7 @@ func diffRaw(src, dst string) error {
 		return nil
 	}
 
-	colorWarning.Printf("src [%s] dst [%s] is not same type file or same type dir\n", src, dst)
+	_, _ = colorWarning.Printf("src [%s] dst [%s] is not same type file or same type dir\n", src, dst)
 	return nil
 }
 
@@ -110,7 +110,7 @@ func diffDir(src, dst string) error {
 				return fmt.Errorf("failed to diff raw src [%s] dst [%s]: %w", src, dst, err)
 			}
 		} else {
-			colorWarning.Printf("src [%s] not exist in dst\n", filepath.Join(src, entry.Name()))
+			_, _ = colorWarning.Printf("src [%s] not exist in dst\n", filepath.Join(src, entry.Name()))
 		}
 	}
 
@@ -133,7 +133,7 @@ func diffFile(src, dst string) error {
 		return nil
 	}
 
-	colorInfo.Printf("Diff file src [%s] dst [%s]\n", src, dst)
+	_, _ = colorInfo.Printf("Diff file src [%s] dst [%s]\n", src, dst)
 	if err := diff.Text(src, dst, srcBytes, dstBytes, os.Stdout, write.TerminalColor()); err != nil {
 		return fmt.Errorf("diff: failed to text src [%s] dst [%s]: %w", src, dst, err)
 	}
