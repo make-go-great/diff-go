@@ -1,10 +1,10 @@
 module github.com/make-go-great/diff-go
 
-go 1.18
+go 1.23.0
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
+	github.com/pkg/diff v0.0.0-20241224192749-4e6772a4315c
 )
 
 require (
